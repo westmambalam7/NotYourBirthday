@@ -44,7 +44,7 @@ def calculate_entropy(password):
     entropy = len(password) * log2(char_pool) if char_pool > 0 else 0
     return entropy
 
-def check_password_strength(password):
+def check_password_strength(password, first_name, last_name, birth_year):
     criteria = {
         "🔠 Uppercase letter": bool(re.search(r'[A-Z]', password)),
         "🔡 Lowercase letter": bool(re.search(r'[a-z]', password)),
@@ -54,6 +54,12 @@ def check_password_strength(password):
     }
     common_passwords = {"password", "123456", "admin", "qwerty", "letmein"}
     is_common = password.lower() in common_passwords
+    
+    # Check if password contains PII (personal information)
+    pii_detected = check_pii_in_password(password, first_name, last_name, birth_year)
+    if pii_detected:
+        return "💀 Weak (Contains your personal information!)", 0, pii_detected  # Force weak if PII detected
+
     score = sum(criteria.values()) - int(is_common)
     entropy = calculate_entropy(password)
     
@@ -85,14 +91,7 @@ def main():
     password = simpledialog.askstring("🔑 Password Input", "Enter your password for analysis:", show='*').strip()
     
     pii_detected = check_pii_in_password(password, first_name, last_name, birth_year)
-    strength, entropy, feedback = check_password_strength(password)
-    
-    if strength == "💪 Strong (Even your pet hamster couldn't guess this!)" and not pii_detected:
-        messagebox.showinfo("👏 You Win!", "Just close this shit and go, you are better than others.")
-        
-        safe_password, encrypted_password = generate_safe_password()
-        messagebox.showinfo("🔐 Safe Password", f"Your **ENCRYPTED** safe password: {encrypted_password}\n\nTo decrypt it, use:\nbase64.b64decode('your_encrypted_password').decode()")
-        return
+    strength, entropy, feedback = check_password_strength(password, first_name, last_name, birth_year)
     
     analysis_msg = f"\n📊 === Password Analysis === \n\n"
     analysis_msg += f"🔹 Strength: {strength}\n"
@@ -113,6 +112,18 @@ def main():
     
     safe_password, encrypted_password = generate_safe_password()
     messagebox.showinfo("🔐 Safe Password", f"Your **ENCRYPTED** safe password: {encrypted_password}\n\nTo decrypt it, use:\nbase64.b64decode('your_encrypted_password').decode()")
+    
+    security_tips = "\n✅ Some tips to save your unaware ass from a nerd who hacks:\n"
+    security_tips += "- Use at least 12-16 characters or more.\n"
+    security_tips += "- Mix uppercase, lowercase, numbers, and symbols.\n"
+    security_tips += "- Consider using a **passphrase** instead of a password.\n"
+    security_tips += "- **Enable 2FA** (Two-Factor Authentication) everywhere!\n"
+    security_tips += "- Use a **password manager**. Please don't use Notepad or Notes app!\n"
+    security_tips += "- If your password is '123456', I can't save you. Sorry.\n"
+    
+    messagebox.showinfo("🔐 Stay Safe!", security_tips)
+    
+    messagebox.showinfo("Final Warning", "Save your ass from data theft. Keep your passwords strong without using PII.\nI will hack your system, find your location, and laugh at you if your password is weak! 😂")
     
 if __name__ == "__main__":
     main()
